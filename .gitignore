@@ -1,4 +1,4 @@
 .idea
 cmake-build-debug
-resources/*
+resources/panda_arm_hand
 mujoco210/*
