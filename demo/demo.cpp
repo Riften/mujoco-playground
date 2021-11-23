@@ -6,7 +6,8 @@
 #include <mujoco.h>
 #include <glfw3.h>
 #include <iostream>
-
+#include <physics_mujoco/mujoco_joint_controller.h>
+#include <vector>
 
 // Util function
 void print_array(mjtNum* arr, int len) {
@@ -35,6 +36,22 @@ bool button_right =  false;
 double lastx = 0;
 double lasty = 0;
 
+// Show M
+void showM() {
+    mjtNum * index_vec = (mjtNum*) mju_malloc(sizeof(mjtNum) * model->nv);
+    mjtNum * res_vec = (mjtNum*) mju_malloc(sizeof(mjtNum) * model->nv);
+
+    std::fill_n(index_vec, model->nv, 1);
+
+    mj_mulM(model, model_data, res_vec, index_vec);
+    std::cout << "M for each joint: ";
+    print_array(res_vec, model->nv);
+    std::cout << std::endl;
+
+    mju_free(index_vec);
+    mju_free(res_vec);
+}
+
 // keyboard callback
 void keyboard(GLFWwindow* window, int key, int scancode, int act, int mods)
 {
@@ -57,7 +74,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int act, int mods)
         print_array(model_data->qvel, model->nv);
         std::cout << std::endl;
 
-        model_data->qM;
+        showM();
     }
 
     // Space: pause
@@ -119,6 +136,22 @@ void mouse_move(GLFWwindow* window, double xpos, double ypos)
     mjv_moveCamera(model, action, dx/height, dy/height, &scn, &cam);
 }
 
+std::vector<physics_mujoco::JointController> controllers;
+
+void damping_controller(const mjModel* m, mjData * d) {
+    //if(m->nu == m->nv) {
+    //    mju_scl(d->ctrl, d->qvel, -1, m->nv);
+    //}
+    // mju_scl(d->qfrc_applied, d->qvel, -2, m->nv);
+    //mju_copy(d->qfrc_applied, d->qfrc_bias, m->nv);
+    // if(!controllers.empty()) {
+    //    controllers[0].setPos(0);
+    //}
+    for(auto& controller : controllers) {
+        controller.setPos(1);
+    }
+}
+
 int main(int argc, char* argv[]) {
     if( !glfwInit() )
         mju_error("Could not initialize GL` FW");
@@ -126,12 +159,14 @@ int main(int argc, char* argv[]) {
     char urdf_path[1000] = "/home/yongxi/Workspace/mujoco_playground/resources/panda_arm_hand/collision1.xml";
     // char urdf_path[1000] = "/home/yongxi/Workspace/mujoco_playground/resources/panda_arm_hand/panda_arm_hand.xml";
     char error[1000];
+
     model = mj_loadXML(urdf_path, nullptr, error, 1000);
 
     if (!model) {
         std::cout << "can not load model: " << error << std::endl;
         return 1;
     }
+
 
     /**
     mj_saveLastXML("/home/yongxi/Workspace/mujoco_playground/resources/panda_arm_hand.xml",
@@ -142,11 +177,19 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Joint Names:" << std::endl;
     for(int i=0; i<model->njnt; ++i) {
-        std::cout << mj_id2name(model, mjOBJ_JOINT, i) << std::endl;
+        std::cout << mj_id2name(model, mjOBJ_JOINT, i) << ", ";
     }
+    std::cout << std::endl;
+
+    std::cout << "Body Names:" << std::endl;
+    for (int i=0; i< model->nbody; ++i) {
+        std::cout << mj_id2name(model, mjOBJ_BODY, i) << ", ";
+    }
+    std::cout << std::endl;
 
     std::cout << "Number of position coordinates: " << model -> nq << std::endl;
     std::cout << "Number of DOFs: " << model->nv << std::endl;
+    std::cout << "Number of actuators/controls: " << model -> nu << std::endl;
 
 
     // make data
@@ -171,8 +214,28 @@ int main(int argc, char* argv[]) {
     glfwSetMouseButtonCallback(window, mouse_button);
     glfwSetScrollCallback(window, scroll);
 
+    // Set control callback
+    controllers.emplace_back(model, model_data, "panda_joint1");
+    controllers.emplace_back(model, model_data, "panda_joint2");
+    controllers.emplace_back(model, model_data, "panda_joint3");
+    controllers.emplace_back(model, model_data, "panda_joint4");
+    controllers.emplace_back(model, model_data, "panda_joint5");
+    controllers.emplace_back(model, model_data, "panda_joint6");
+    controllers.emplace_back(model, model_data, "panda_joint7");
+    mjcb_control = damping_controller;
+
     // Simulate the start situation
     mj_step(model, model_data);
+
+    for(int i=0; i<model->nq-2; ++i) {
+        model_data->qpos[i] = -0.5;
+    }
+
+    for(int i=0; i<model->nv-2; ++i) {
+        model_data->qvel[i] = 0;
+    }
+
+    mj_step1(model, model_data);
 
     while( !glfwWindowShouldClose(window) )
     {

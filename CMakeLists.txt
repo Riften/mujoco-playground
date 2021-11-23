@@ -19,5 +19,8 @@ MESSAGE(STATUS "Found GL ${libgl}")
 MESSAGE(STATUS "Found OMPL ${OMPL_LIBRARIES}")
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+SET(INTERFACE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/interfaces")
+SET(PHYSICS_MUJOCO_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/physics_mujoco/include")
 
+add_subdirectory(physics_mujoco)
 add_subdirectory(demo)
