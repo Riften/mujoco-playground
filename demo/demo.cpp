@@ -7,6 +7,7 @@
 #include <glfw3.h>
 #include <iostream>
 #include <physics_mujoco/mujoco_joint_controller.h>
+#include <physics_mujoco/mujoco_joint_group.h>
 #include <vector>
 
 // Util function
@@ -36,6 +37,9 @@ bool button_right =  false;
 double lastx = 0;
 double lasty = 0;
 
+// Joint Group
+physics_mujoco::JointGroup* jointGroup = nullptr;
+
 // Show M
 void showM() {
     mjtNum * index_vec = (mjtNum*) mju_malloc(sizeof(mjtNum) * model->nv);
@@ -50,6 +54,18 @@ void showM() {
 
     mju_free(index_vec);
     mju_free(res_vec);
+}
+
+void showContact() {
+    std::cout << "Contacts: ";
+    for(int i=0; i < model_data->ncon; ++i) {
+        std::cout << '('
+            << mj_id2name(model, mjOBJ_BODY, model->geom_bodyid[model_data->contact[i].geom1])
+            << ','
+            << mj_id2name(model, mjOBJ_BODY, model->geom_bodyid[model_data->contact[i].geom2])
+            << ") ";
+    }
+    std::cout << std::endl;
 }
 
 // keyboard callback
@@ -75,6 +91,15 @@ void keyboard(GLFWwindow* window, int key, int scancode, int act, int mods)
         std::cout << std::endl;
 
         showM();
+        showContact();
+        if(jointGroup) {
+            if(jointGroup->inCollision()) {
+                std::cout << "Collision Detected" << std::endl;
+            } else {
+                std::cout << "Collision Free" << std::endl;
+            }
+        }
+        // if(jointGroup.inCollision())
     }
 
     // Space: pause
@@ -215,6 +240,7 @@ int main(int argc, char* argv[]) {
     glfwSetScrollCallback(window, scroll);
 
     // Set control callback
+
     controllers.emplace_back(model, model_data, "panda_joint1");
     controllers.emplace_back(model, model_data, "panda_joint2");
     controllers.emplace_back(model, model_data, "panda_joint3");
@@ -223,6 +249,24 @@ int main(int argc, char* argv[]) {
     controllers.emplace_back(model, model_data, "panda_joint6");
     controllers.emplace_back(model, model_data, "panda_joint7");
     mjcb_control = damping_controller;
+
+    std::vector<std::string> joint_names = {"panda_joint1",
+                                            "panda_joint2",
+                                            "panda_joint3",
+                                            "panda_joint4",
+                                            "panda_joint5",
+                                            "panda_joint6",
+                                            "panda_joint7"};
+
+    std::vector<std::string> link_names = {"panda_link1",
+                                           "panda_link2",
+                                           "panda_link3",
+                                           "panda_link4",
+                                           "panda_link5",
+                                           "panda_link6",
+                                           "panda_link7"};
+
+    jointGroup = new physics_mujoco::JointGroup(model, model_data, joint_names, link_names);
 
     // Simulate the start situation
     mj_step(model, model_data);

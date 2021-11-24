@@ -7,6 +7,7 @@
 
 #include <physics_interface/joint_controller.h>
 #include <mujoco.h>
+#include <physics_mujoco/utils.h>
 
 namespace physics_mujoco {
     class JointController: public physics_interface::JointController {

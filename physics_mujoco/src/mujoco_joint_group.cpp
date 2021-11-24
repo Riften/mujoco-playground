@@ -3,6 +3,9 @@
 //
 
 #include <physics_mujoco/mujoco_joint_group.h>
+#include <log4cxx/logger.h>
+
+static log4cxx::LoggerPtr logger = log4cxx::Logger::getLogger("JointGroup");
 
 namespace physics_mujoco {
 
@@ -13,13 +16,16 @@ namespace physics_mujoco {
         }
     }
 
-    JointGroup::JointGroup(mjModel *model, mjData *data, const std::vector<std::string> &joint_names)
+    JointGroup::JointGroup(mjModel *model, mjData *data,
+                           const std::vector<std::string> &joint_names,
+                           const std::vector<std::string> &link_names)
     : model_(model)
     , data_(data)
     , qpos_indices_(joint_names.size())
     , qvel_indices_(joint_names.size())
     , n_jnt_(joint_names.size())
-    , kd_(0){
+    , kd_(0)
+    , link_ids_(link_names.size()) {
         // Fetch indices
         for(int i=0; i<joint_names.size(); ++i) {
             int id = mj_name2id(model_, mjOBJ_JOINT, joint_names[i].c_str());
@@ -30,9 +36,23 @@ namespace physics_mujoco {
             qvel_indices_[i] = model_->jnt_dofadr[id];
         }
 
+        for(int i=0; i<link_names.size(); ++i) {
+            link_ids_[i] = mj_name2id(model_, mjOBJ_BODY, link_names[i].c_str());
+            if (link_ids_[i] < 0) {
+                throw NoSuchJoint(link_names[i].c_str());
+            }
+        }
+
         // mem alloc for tmp_res_
         /// @todo Array size may be insufficient if one joint have multi velocity
         tmp_res_ = (mjtNum*) mju_malloc(sizeof(mjtNum) * n_jnt_);
+
+        array_map<int> link_id_map(link_ids_);
+        for(int i=0; i < model_->ngeom; ++i) {
+            if(link_id_map.has(model_->geom_bodyid[i])) {
+                geom_body_map_[i] = model_->geom_bodyid[i];
+            }
+        }
     }
 
     JointGroup::~JointGroup() {
@@ -57,6 +77,17 @@ namespace physics_mujoco {
             /// @todo multi joint support
             res[i] = data_->qvel[qvel_indices_[i]];
         }
+    }
+
+    bool JointGroup::inCollision() {
+        // Check all contacts
+        for(int i=0; i<data_->ncon; ++i) {
+            if(keyInMap(geom_body_map_, data_->contact[i].geom1)
+            || keyInMap(geom_body_map_, data_->contact[i].geom2)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     void JointGroup::control(const std::vector<physics_interface::JointPos> &pos, physics_interface::ControlType type) {

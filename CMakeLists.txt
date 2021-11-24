@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(mujoco_playground)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 find_library(libmujoco mujoco210 HINTS ${CMAKE_CURRENT_SOURCE_DIR}/mujoco210/bin)
 find_library(libglfw libglfw.so.3 HINTS ${CMAKE_CURRENT_SOURCE_DIR}/mujoco210/bin)
@@ -8,6 +9,7 @@ find_library(libgl GL)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(ompl REQUIRED)
+find_package(Log4cxx REQUIRED)
 
 set(MUJOCO_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/mujoco210/include)
 MESSAGE(STATUS "Found mujoco ${libmujoco}")
