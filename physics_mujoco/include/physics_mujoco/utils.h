@@ -7,8 +7,33 @@
 
 #include <map>
 #include <vector>
+#include <cstring>
+#include <mjmodel.h>
+#include <exception>
+#include <log4cxx/propertyconfigurator.h>
+#include <log4cxx/basicconfigurator.h>
+#include <fstream>
+#include <iostream>
 
 namespace physics_mujoco {
+
+    static inline bool file_exists(const char* file_path) {
+        std::ifstream f(file_path);
+        return f.good();
+    }
+
+    void inline initLogSystem() {
+        char DEFAULT_LOG4CXX_CONFIG_PATH[200];
+        sprintf(DEFAULT_LOG4CXX_CONFIG_PATH, "%s/.rfpddl.config", std::getenv("HOME"));
+        if(file_exists(DEFAULT_LOG4CXX_CONFIG_PATH)) {
+            std::cout << "... Initialize log system from " << DEFAULT_LOG4CXX_CONFIG_PATH << std::endl;
+            log4cxx::PropertyConfigurator::configure(DEFAULT_LOG4CXX_CONFIG_PATH);
+        } else {
+            std::cout << "... Initialize default log system." << std::endl;
+            log4cxx::BasicConfigurator::configure();
+        }
+    }
+
     /**
      * Convert array to map for quick index/search.
      * @tparam T type of array element which is also the type of map key.
@@ -53,6 +78,19 @@ namespace physics_mujoco {
     bool keyInMap(const std::map<TKey, Tp>& data, const TKey& key) {
         return data.find(key) != data.cend();
     }
+
+    /**
+     * Get mjModel::body_pos[body_id] and copy it in res.
+     * @param model
+     * @param body_id
+     * @param res
+     */
+    void get_body_pos(const mjModel* model, int body_id, mjtNum * res);
+
+    void get_arr(const mjtNum* data, int index, int size, mjtNum * res);
+
+    const char* mj_id2name_err(const mjModel* m, int type, int id);
+    const char* mj_id2name_safe(const mjModel* m, int type, int id);
 }
 
 #endif //MUJOCO_PLAYGROUND_UTILS_H

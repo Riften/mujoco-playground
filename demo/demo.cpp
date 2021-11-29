@@ -9,6 +9,10 @@
 #include <physics_mujoco/mujoco_joint_controller.h>
 #include <physics_mujoco/mujoco_joint_group.h>
 #include <vector>
+// #include <kdl/kdl.hpp>
+#include <kdl/chain.hpp>
+#include <physics_mujoco/utils.h>
+#include <physics_mujoco/mujoco_kinematic_tree.h>
 
 // Util function
 void print_array(mjtNum* arr, int len) {
@@ -178,6 +182,8 @@ void damping_controller(const mjModel* m, mjData * d) {
 }
 
 int main(int argc, char* argv[]) {
+    physics_mujoco::initLogSystem();
+
     if( !glfwInit() )
         mju_error("Could not initialize GL` FW");
     // char urdf_path[1000] = "/home/yongxi/Workspace/mujoco_playground/resources/panda_arm_hand/panda_arm_hand.urdf";
@@ -216,6 +222,12 @@ int main(int argc, char* argv[]) {
     std::cout << "Number of DOFs: " << model->nv << std::endl;
     std::cout << "Number of actuators/controls: " << model -> nu << std::endl;
 
+    // Try to fetch link parent
+    std::cout << "Parent of panda_link4 is "
+              << mj_id2name(model, mjOBJ_BODY, model->body_parentid[mj_name2id(model, mjOBJ_BODY, "panda_link4")])
+              << std::endl;
+
+    physics_mujoco::KinematicTree tree(model, "panda_link1", "panda_link7");
 
     // make data
     model_data = mj_makeData(model);

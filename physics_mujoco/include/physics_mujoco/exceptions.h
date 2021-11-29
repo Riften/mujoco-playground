@@ -33,17 +33,45 @@ namespace physics_mujoco {
         }
     };
 
+    class NoSuchLink : public MujocoException {
+    public:
+        explicit NoSuchLink(const char* link_name): MujocoException() {
+            sprintf(msg_, "no such link %s", link_name);
+        }
+     };
+
+    class NoSuchName : public MujocoException {
+    public:
+        explicit NoSuchName(const char* name) : MujocoException() {
+            sprintf(msg_, "no such name %s", name);
+        }
+    };
+
+    class NoSuchId : public MujocoException {
+    public:
+        explicit NoSuchId(int id) : MujocoException() {
+            sprintf(msg_, "no name for %d", id);
+        }
+    };
+
     class InsufficientContainer : public MujocoException {
     public:
-        InsufficientContainer(size_t given, size_t required) {
+        InsufficientContainer(size_t given, size_t required) : MujocoException() {
             sprintf(msg_, "container too small: %zu given while %zu required", given, required);
         }
     };
 
     class UnsupportedControlMode : public MujocoException {
     public:
-        UnsupportedControlMode() {
+        UnsupportedControlMode() : MujocoException() {
             sprintf(msg_, "unsupported control mode");
+        }
+    };
+
+    class UnsupportedJointType : public MujocoException {
+    public:
+        explicit UnsupportedJointType(int joint_type) : MujocoException() {
+            sprintf(msg_, "unsupported joint type %d", joint_type);
         }
     };
 }
