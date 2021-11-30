@@ -20,7 +20,11 @@ namespace physics_mujoco {
          * Instead, this is the link behind the first joint you want to plan for.
          * @param last_link The link behind the last joint you want to plan for.
          */
-        KinematicTree(const mjModel *model, const std::string& first_link, const std::string& last_link);
+        KinematicTree(const mjModel *model,
+                      const std::string& first_link,
+                      const std::string& last_link,
+                      const std::string& root_name = "kdl_root");
+        void print_kdl_tree();
 
     private:
         /**
@@ -28,7 +32,7 @@ namespace physics_mujoco {
          */
         KDL::Tree tree;
         std::vector<BodyInfo> body_info_;
-        bool addLinkRecursive(const mjModel * model, int link_id);
+        bool addLinkRecursive(const mjModel * model, int link_id, const std::string& hook_seg_name);
     };
 }
 

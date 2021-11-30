@@ -34,4 +34,37 @@ namespace physics_mujoco {
             return null_name;
         }
     }
+
+    std::string KDLFrameToString(const KDL::Frame& frame) {
+        std::ostringstream sstr;
+        double qx, qy, qz, qw;
+        double ex, ey, ez;
+        frame.M.GetQuaternion(qx, qy, qz, qw);
+        frame.M.GetEulerZYX(ez, ey, ex);
+        sstr << "{(" << frame.p.x() << ',' << frame.p.y() << ',' << frame.p.z() << "); "
+             << '(' << ex << ',' << ey << ',' << ez << "); "
+             << '(' << qx << ',' << qy << ',' << qz << ',' << qw << ")}";
+        return sstr.str();
+    }
+
+    KDL::Frame mj_body_kdl_frame(const mjModel *m, int body_id) {
+        mjtNum body_pos[3];
+        mjtNum body_quat[4];
+        get_body_pos(m, body_id, body_pos);
+        get_arr(m->body_quat, body_id, 4, body_quat);
+        return {KDL::Rotation::Quaternion(body_quat[1], body_quat[2], body_quat[3], body_quat[0]),
+                KDL::Vector(body_pos[0], body_pos[1], body_pos[2])};
+    }
+
+    void TraverseKDLTree(KDL::SegmentMap::const_iterator node, int indent) {
+
+        for(int i=0; i<indent; ++i) {
+            std::cout << "  ";
+        }
+        std::cout << node->first << "  " << KDLFrameToString(node->second.segment.getFrameToTip()) <<std::endl;
+
+        for(auto child : node->second.children) {
+            TraverseKDLTree(child, indent+1);
+        }
+    }
 }

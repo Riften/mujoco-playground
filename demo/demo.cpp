@@ -228,6 +228,11 @@ int main(int argc, char* argv[]) {
               << std::endl;
 
     physics_mujoco::KinematicTree tree(model, "panda_link1", "panda_link7");
+    for(int i=0; i< model->nbody; ++i) {
+        std::cout << physics_mujoco::mj_id2name_safe(model, mjOBJ_BODY, i)
+                  << ": " << physics_mujoco::KDLFrameToString(physics_mujoco::mj_body_kdl_frame(model, i)) << std::endl;
+    }
+    tree.print_kdl_tree();
 
     // make data
     model_data = mj_makeData(model);

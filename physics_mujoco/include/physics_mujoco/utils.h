@@ -14,6 +14,8 @@
 #include <log4cxx/basicconfigurator.h>
 #include <fstream>
 #include <iostream>
+#include <kdl/frames.hpp>
+#include <kdl/tree.hpp>
 
 namespace physics_mujoco {
 
@@ -91,6 +93,10 @@ namespace physics_mujoco {
 
     const char* mj_id2name_err(const mjModel* m, int type, int id);
     const char* mj_id2name_safe(const mjModel* m, int type, int id);
+
+    std::string KDLFrameToString(const KDL::Frame& frame);
+    KDL::Frame mj_body_kdl_frame(const mjModel *m, int body_id);
+    void TraverseKDLTree(KDL::SegmentMap::const_iterator node, int indent=0);
 }
 
 #endif //MUJOCO_PLAYGROUND_UTILS_H
