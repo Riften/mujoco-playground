@@ -47,6 +47,37 @@ namespace physics_mujoco {
         return sstr.str();
     }
 
+    std::string KDLChainToString(const KDL::Chain& chain) {
+        std::ostringstream sstr;
+        sstr << '{';
+        for(const auto& segment : chain.segments) {
+            sstr << segment.getName() << '(' << segment.getJoint().getName() << "), ";
+        }
+        sstr << '}';
+        return sstr.str();
+    }
+
+    std::string KDLJntArrayToString(const KDL::JntArray& joint_array) {
+        std::ostringstream sstr;
+        sstr << "[ ";
+        for(size_t i=0; i<joint_array.data.size(); ++i) {
+            sstr << joint_array(i) << ", ";
+        }
+        sstr <<']';
+        return sstr.str();
+    }
+
+    std::string KDLVectorToString(const KDL::Vector& vec) {
+        std::ostringstream sstr;
+        sstr << "[ " << vec.x() << ", " << vec.y() << ", " << vec.z() << "]";
+        return sstr.str();
+    }
+
+    std::string EigenAffine3dToString(const Eigen::Affine3d& transform) {
+        std::ostringstream sstr;
+
+    }
+
     KDL::Frame mj_body_kdl_frame(const mjModel *m, int body_id) {
         mjtNum body_pos[3];
         mjtNum body_quat[4];
@@ -56,12 +87,22 @@ namespace physics_mujoco {
                 KDL::Vector(body_pos[0], body_pos[1], body_pos[2])};
     }
 
-    void TraverseKDLTree(KDL::SegmentMap::const_iterator node, int indent) {
+    KDL::Frame mj_body_kdl_xframe(const mjData *data, int body_id) {
+        mjtNum body_pos[3];
+        mjtNum body_quat[4];
+        get_arr(data->xpos, body_id, 3, body_pos);
+        get_arr(data->xquat, body_id, 4, body_quat);
+        return {KDL::Rotation::Quaternion(body_quat[1], body_quat[2], body_quat[3], body_quat[0]),
+                KDL::Vector(body_pos[0], body_pos[1], body_pos[2])};
+    }
 
+    void TraverseKDLTree(KDL::SegmentMap::const_iterator node, int indent) {
         for(int i=0; i<indent; ++i) {
             std::cout << "  ";
         }
-        std::cout << node->first << "  " << KDLFrameToString(node->second.segment.getFrameToTip()) <<std::endl;
+        std::cout << node->first << "  " << KDLFrameToString(node->second.segment.getFrameToTip())
+                  << " " << node->second.segment.getJoint().getName() << KDLVectorToString(node->second.segment.getJoint().JointOrigin())
+                  << KDLVectorToString(node->second.segment.getJoint().JointAxis())<<std::endl;
 
         for(auto child : node->second.children) {
             TraverseKDLTree(child, indent+1);

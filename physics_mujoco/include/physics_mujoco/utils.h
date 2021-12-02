@@ -9,6 +9,7 @@
 #include <vector>
 #include <cstring>
 #include <mjmodel.h>
+#include <mjdata.h>
 #include <exception>
 #include <log4cxx/propertyconfigurator.h>
 #include <log4cxx/basicconfigurator.h>
@@ -16,6 +17,8 @@
 #include <iostream>
 #include <kdl/frames.hpp>
 #include <kdl/tree.hpp>
+#include <kdl/jntarray.hpp>
+#include <Eigen/Geometry>
 
 namespace physics_mujoco {
 
@@ -95,7 +98,12 @@ namespace physics_mujoco {
     const char* mj_id2name_safe(const mjModel* m, int type, int id);
 
     std::string KDLFrameToString(const KDL::Frame& frame);
+    std::string KDLChainToString(const KDL::Chain& chain);
+    std::string KDLJntArrayToString(const KDL::JntArray& joint_array);
+    std::string KDLVectorToString(const KDL::Vector& vec);
+    std::string EigenAffine3dToString(const Eigen::Affine3d& transform);
     KDL::Frame mj_body_kdl_frame(const mjModel *m, int body_id);
+    KDL::Frame mj_body_kdl_xframe(const mjData *data, int body_id);
     void TraverseKDLTree(KDL::SegmentMap::const_iterator node, int indent=0);
 }
 

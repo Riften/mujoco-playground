@@ -25,14 +25,25 @@ namespace physics_mujoco {
                       const std::string& last_link,
                       const std::string& root_name = "kdl_root");
         void print_kdl_tree();
+        KDL::Tree& kdl_tree() {return tree;}
+        const mjModel* mujoco_model() const {return model_;}
+        int mujoco_joint_id(const std::string& joint_name) const {
+            return joint_ids_.at(joint_name);
+        }
+        int mujoco_link_id(const std::string& link_name) const {
+            return link_ids_.at(link_name);
+        }
 
     private:
         /**
          * The default constructor of KDL::Tree would create an empty tree with root_name = "root".
          */
         KDL::Tree tree;
+        const mjModel * model_;
         std::vector<BodyInfo> body_info_;
         bool addLinkRecursive(const mjModel * model, int link_id, const std::string& hook_seg_name);
+        std::map<std::string, int> joint_ids_; ///< Map from kdl joint name to mujoco joint index.
+        std::map<std::string, int> link_ids_; ///< Map from kdl link/segment name to mujoco body index.
     };
 }
 

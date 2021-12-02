@@ -10,19 +10,30 @@
 #include <string>
 #include <mujoco.h>
 #include <physics_mujoco/utils.h>
+#include <physics_mujoco/mujoco_kinematic_tree.h>
+#include <kdl/chain.hpp>
+#include <kdl/chainfksolverpos_recursive.hpp>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 namespace physics_mujoco {
+    // typedef  Eigen::Transform<mjtNum, 3, Eigen::Affine> Affine3d;
 
     class JointGroup: public physics_interface::JointGroup{
     public:
         /// @todo mark model as const if wo do not change the property of model directly.
+        /// @deprecated
         JointGroup(mjModel * model, mjData * data,
                    const std::vector<std::string>& joint_names,
                    const std::vector<std::string>& link_names);
+        JointGroup(mjData * data, KinematicTree &tree,
+                   const std::string& start_link_name,
+                   const std::string& end_link_name);
         ~JointGroup() override;
         void getPos(std::vector<physics_interface::JointPos>& res) override;
         void getVel(std::vector<physics_interface::JointVel>& res) override;
-
+        KDL::Frame eefPos();
+        KDL::Frame FK();
         /**
          * Whether links in this group is in collision with any geoms.
          * @return
@@ -47,7 +58,7 @@ namespace physics_mujoco {
         // mjData * mj_data() {return data_;}
         friend void control_callback_incremental(const mjModel* model, mjData * data);
     private:
-        mjModel * model_;
+        const mjModel * model_;
         mjData * data_;
         std::vector<int> qpos_indices_;
         std::vector<int> qvel_indices_;
@@ -68,6 +79,11 @@ namespace physics_mujoco {
         mjtNum* tmp_res_;
 
         void vel_to_tmp();
+
+        /// OROCOS KDL
+        KDL::Chain chain_;
+        // KDL::JntArray kdl_jnt_pos_;
+        KDL::ChainFkSolverPos_recursive* kdl_fk_solver_ = nullptr; // solver have no default constructor
     };
 }
 

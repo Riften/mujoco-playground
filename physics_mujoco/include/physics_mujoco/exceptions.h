@@ -74,6 +74,13 @@ namespace physics_mujoco {
             sprintf(msg_, "unsupported joint type %d", joint_type);
         }
     };
+
+    class FailToCreateChain : public MujocoException {
+    public:
+        FailToCreateChain(const char* start, const char* end): MujocoException() {
+            sprintf(msg_, "create kdl kinematic chain from %s to %s failed", start, end);
+        }
+    };
 }
 
 #endif //MUJOCO_PLAYGROUND_EXCEPTIONS_H

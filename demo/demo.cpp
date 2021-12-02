@@ -11,6 +11,7 @@
 #include <vector>
 // #include <kdl/kdl.hpp>
 #include <kdl/chain.hpp>
+#include <kdl/chainfksolverpos_recursive.hpp>
 #include <physics_mujoco/utils.h>
 #include <physics_mujoco/mujoco_kinematic_tree.h>
 
@@ -44,6 +45,10 @@ double lasty = 0;
 // Joint Group
 physics_mujoco::JointGroup* jointGroup = nullptr;
 
+// OROCOS Kinematics
+// KDL::Chain* kinematic_chain;
+// KDL::ChainFkSolverPos* fk_solver;
+
 // Show M
 void showM() {
     mjtNum * index_vec = (mjtNum*) mju_malloc(sizeof(mjtNum) * model->nv);
@@ -58,6 +63,19 @@ void showM() {
 
     mju_free(index_vec);
     mju_free(res_vec);
+}
+
+void showFK() {
+    auto eef_pos = jointGroup->eefPos();
+
+    std::cout << "End effector:" << std::endl;
+    std::cout << physics_mujoco::KDLFrameToString(eef_pos) << std::endl;
+
+    std::cout << "From KDL:" << std::endl;
+    auto kdl_fk = jointGroup->FK();
+    std::cout << physics_mujoco::KDLFrameToString(kdl_fk) << std::endl;
+    std::cout << "Difference:" << std::endl;
+    std::cout << physics_mujoco::KDLVectorToString(eef_pos.p - kdl_fk.p) << std::endl;
 }
 
 void showContact() {
@@ -102,6 +120,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int act, int mods)
             } else {
                 std::cout << "Collision Free" << std::endl;
             }
+            showFK();
         }
         // if(jointGroup.inCollision())
     }
@@ -228,14 +247,27 @@ int main(int argc, char* argv[]) {
               << std::endl;
 
     physics_mujoco::KinematicTree tree(model, "panda_link1", "panda_link7");
-    for(int i=0; i< model->nbody; ++i) {
-        std::cout << physics_mujoco::mj_id2name_safe(model, mjOBJ_BODY, i)
-                  << ": " << physics_mujoco::KDLFrameToString(physics_mujoco::mj_body_kdl_frame(model, i)) << std::endl;
-    }
+    // for(int i=0; i< model->nbody; ++i) {
+    //    std::cout << physics_mujoco::mj_id2name_safe(model, mjOBJ_BODY, i)
+    //              << ": " << physics_mujoco::KDLFrameToString(physics_mujoco::mj_body_kdl_frame(model, i)) << std::endl;
+    // }
     tree.print_kdl_tree();
+    // kinematic_chain = new KDL::Chain;
+    //if(!tree.kdl_tree().getChain("panda_link1", "panda_link7", *kinematic_chain)) {
+    //    std::cout << "create kinematic chain failed" << std::endl;
+    //    return 1;
+    //}
+
+
+    // fk_solver = new KDL::ChainFkSolverPos_recursive(*kinematic_chain);
+
+
+    //===============
 
     // make data
     model_data = mj_makeData(model);
+    // std::cout << tree.kdl_tree().getRootSegment()->first << std::endl;
+    jointGroup = new physics_mujoco::JointGroup(model_data, tree, "kdl_root", "panda_link7");
 
     GLFWwindow* window = glfwCreateWindow(1200, 900, "Demo", NULL, NULL);
     glfwMakeContextCurrent(window);
@@ -267,6 +299,7 @@ int main(int argc, char* argv[]) {
     controllers.emplace_back(model, model_data, "panda_joint7");
     mjcb_control = damping_controller;
 
+    /**
     std::vector<std::string> joint_names = {"panda_joint1",
                                             "panda_joint2",
                                             "panda_joint3",
@@ -284,13 +317,21 @@ int main(int argc, char* argv[]) {
                                            "panda_link7"};
 
     jointGroup = new physics_mujoco::JointGroup(model, model_data, joint_names, link_names);
-
+    **/
     // Simulate the start situation
     mj_step(model, model_data);
 
     for(int i=0; i<model->nq-2; ++i) {
         model_data->qpos[i] = -0.5;
     }
+    //model_data->qpos[0] = -0.885962;
+    //model_data->qpos[1] = 1.76342;
+    //model_data->qpos[2] = 0.907294;
+    //model_data->qpos[3] = -2.57793;
+    //model_data->qpos[4] = 1.70364;
+    //model_data->qpos[5] = 2.39712;
+    //model_data->qpos[6] = -1.38415;
+
 
     for(int i=0; i<model->nv-2; ++i) {
         model_data->qvel[i] = 0;

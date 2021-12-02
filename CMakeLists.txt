@@ -11,6 +11,8 @@ find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(ompl REQUIRED)
 find_package(Log4cxx REQUIRED)
+# KDL Chain Solver use Eigen3 publicly
+find_package(Eigen3 REQUIRED)
 
 set(MUJOCO_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/mujoco210/include)
 set(KDL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extern/kdl-1.5.1/include)
@@ -22,6 +24,7 @@ MESSAGE(STATUS "Found GLEW ${GLEW_LIBRARIES}")
 MESSAGE(STATUS "Found GL ${libgl}")
 MESSAGE(STATUS "Found OMPL ${OMPL_LIBRARIES}")
 MESSAGE(STATUS "Found kdl ${libkdl}")
+MESSAGE(STATUS "Founc Eigen3 include ${EIGEN3_INCLUDE_DIR}")
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 SET(INTERFACE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/interfaces")

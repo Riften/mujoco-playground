@@ -8,7 +8,8 @@ target_include_directories(demo
         ${OPENGL_INCLUDE_DIR}
         ${PHYSICS_MUJOCO_INCLUDE_DIR}
         #${FABRIK_INCLUDE_DIR}
-        ${KDL_INCLUDE_DIR})
+        ${KDL_INCLUDE_DIR}
+        ${EIGEN3_INCLUDE_DIR})
 
 add_executable(basic basic.cpp)
 target_link_libraries(basic ${libmujoco} ${libglfw} ${GLEW_LIBRARIES} OpenGL::GL)
