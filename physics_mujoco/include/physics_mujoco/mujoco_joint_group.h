@@ -13,6 +13,10 @@
 #include <physics_mujoco/mujoco_kinematic_tree.h>
 #include <kdl/chain.hpp>
 #include <kdl/chainfksolverpos_recursive.hpp>
+// #include <kdl/chainiksolverpos_nr.hpp>
+#include <kdl/chainiksolverpos_nr_jl.hpp> // jl means joint limits
+#include <kdl/chainiksolvervel_pinv.hpp>
+// #include <kdl/chainiksolverpos_lma.hpp>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
@@ -21,19 +25,17 @@ namespace physics_mujoco {
 
     class JointGroup: public physics_interface::JointGroup{
     public:
-        /// @todo mark model as const if wo do not change the property of model directly.
-        /// @deprecated
-        JointGroup(mjModel * model, mjData * data,
-                   const std::vector<std::string>& joint_names,
-                   const std::vector<std::string>& link_names);
         JointGroup(mjData * data, KinematicTree &tree,
                    const std::string& start_link_name,
                    const std::string& end_link_name);
         ~JointGroup() override;
         void getPos(std::vector<physics_interface::JointPos>& res) override;
         void getVel(std::vector<physics_interface::JointVel>& res) override;
+        void setPos(KDL::JntArray & jnt_pos);
         KDL::Frame eefPos();
         KDL::Frame FK();
+        KDL::JntArray IK(const KDL::Frame& tip_pos);
+        size_t size() const {return n_jnt_;}
         /**
          * Whether links in this group is in collision with any geoms.
          * @return
@@ -63,6 +65,7 @@ namespace physics_mujoco {
         std::vector<int> qpos_indices_;
         std::vector<int> qvel_indices_;
         std::vector<int> link_ids_;
+        std::vector<int> joint_ids_;
         std::vector<physics_interface::JointPos> target_pos_;
         // std::vector<physics_interface::JointPos> target_pos_inc_;
         size_t n_jnt_;
@@ -84,6 +87,11 @@ namespace physics_mujoco {
         KDL::Chain chain_;
         // KDL::JntArray kdl_jnt_pos_;
         KDL::ChainFkSolverPos_recursive* kdl_fk_solver_ = nullptr; // solver have no default constructor
+        KDL::ChainIkSolverPos_NR_JL* kdl_ik_solver_ = nullptr;
+        KDL::ChainIkSolverVel_pinv* kdl_ik_vel_solver_ = nullptr;
+        KDL::JntArray kdl_jnt_min_;
+        KDL::JntArray kdl_jnt_max_;
+        KDL::JntArray kdl_jnt_default_;
     };
 }
 

@@ -14,6 +14,10 @@
 #include <kdl/chainfksolverpos_recursive.hpp>
 #include <physics_mujoco/utils.h>
 #include <physics_mujoco/mujoco_kinematic_tree.h>
+#include <log4cxx/logger.h>
+
+// Logger
+log4cxx::LoggerPtr logger = log4cxx::Logger::getLogger("demo");
 
 // Util function
 void print_array(mjtNum* arr, int len) {
@@ -48,6 +52,7 @@ physics_mujoco::JointGroup* jointGroup = nullptr;
 // OROCOS Kinematics
 // KDL::Chain* kinematic_chain;
 // KDL::ChainFkSolverPos* fk_solver;
+KDL::Frame copied_tip;
 
 // Show M
 void showM() {
@@ -128,6 +133,19 @@ void keyboard(GLFWwindow* window, int key, int scancode, int act, int mods)
     // Space: pause
     if( act==GLFW_PRESS && key==GLFW_KEY_SPACE) {
         paused = !paused;
+    }
+
+    // C: Copy current pose
+    if( act == GLFW_PRESS && key == GLFW_KEY_C) {
+        copied_tip = jointGroup->eefPos();
+        LOG4CXX_DEBUG(logger, "Tip frame copied: " << physics_mujoco::KDLFrameToString(copied_tip));
+    }
+
+    // V: Compute IK and set pose
+    if( act == GLFW_PRESS && key == GLFW_KEY_V) {
+        KDL::JntArray ik_res = jointGroup->IK(copied_tip);
+        LOG4CXX_DEBUG(logger, "Set to ik res: " << physics_mujoco::KDLJntArrayToString(ik_res));
+        jointGroup->setPos(ik_res);
     }
 }
 
@@ -241,25 +259,9 @@ int main(int argc, char* argv[]) {
     std::cout << "Number of DOFs: " << model->nv << std::endl;
     std::cout << "Number of actuators/controls: " << model -> nu << std::endl;
 
-    // Try to fetch link parent
-    std::cout << "Parent of panda_link4 is "
-              << mj_id2name(model, mjOBJ_BODY, model->body_parentid[mj_name2id(model, mjOBJ_BODY, "panda_link4")])
-              << std::endl;
-
     physics_mujoco::KinematicTree tree(model, "panda_link1", "panda_link7");
-    // for(int i=0; i< model->nbody; ++i) {
-    //    std::cout << physics_mujoco::mj_id2name_safe(model, mjOBJ_BODY, i)
-    //              << ": " << physics_mujoco::KDLFrameToString(physics_mujoco::mj_body_kdl_frame(model, i)) << std::endl;
-    // }
+
     tree.print_kdl_tree();
-    // kinematic_chain = new KDL::Chain;
-    //if(!tree.kdl_tree().getChain("panda_link1", "panda_link7", *kinematic_chain)) {
-    //    std::cout << "create kinematic chain failed" << std::endl;
-    //    return 1;
-    //}
-
-
-    // fk_solver = new KDL::ChainFkSolverPos_recursive(*kinematic_chain);
 
 
     //===============

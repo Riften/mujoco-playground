@@ -35,11 +35,24 @@ namespace physics_mujoco {
         qpos_indices_.resize(n_jnt_);
         qvel_indices_.resize(n_jnt_);
         link_ids_.resize(n_jnt_);
+        joint_ids_.resize(n_jnt_);
+        kdl_jnt_max_.resize(n_jnt_);
+        kdl_jnt_min_.resize(n_jnt_);
+        kdl_jnt_default_.resize(n_jnt_);
+        SetToZero(kdl_jnt_default_);
         for(int i=0; i<chain_.getNrOfSegments(); ++i) {
             link_ids_[i] = tree.mujoco_link_id(chain_.getSegment(i).getName());
             int joint_id = tree.mujoco_joint_id(chain_.getSegment(i).getJoint().getName());
+            joint_ids_[i] = joint_id;
             qpos_indices_[i] = model_->jnt_qposadr[joint_id];
             qvel_indices_[i] = model_->jnt_dofadr[joint_id];
+            if(model_->jnt_limited[i]) {
+                kdl_jnt_min_(i) = model_->jnt_range[i*2];
+                kdl_jnt_max_(i) = model_->jnt_range[i*2+1];
+            } else {
+                kdl_jnt_min_(i) = -M_PI;
+                kdl_jnt_max_(i) = M_PI;
+            }
         }
         std::ostringstream tmp_sstr;
         tmp_sstr << '[';
@@ -60,9 +73,19 @@ namespace physics_mujoco {
             }
         }
 
+        // Fetch joint limit info
+
+
         // create kdl solver
         kdl_fk_solver_ = new KDL::ChainFkSolverPos_recursive(chain_);
-        // kdl_jnt_pos.resize(n_jnt_);
+        kdl_ik_vel_solver_ = new KDL::ChainIkSolverVel_pinv(chain_);
+        kdl_ik_solver_ = new KDL::ChainIkSolverPos_NR_JL(chain_,
+                                                         kdl_jnt_min_,
+                                                         kdl_jnt_max_,
+                                                         *kdl_fk_solver_,
+                                                         *kdl_ik_vel_solver_,
+                                                         100,
+                                                         1e-6);
     }
 /**
     JointGroup::JointGroup(mjModel *model, mjData *data,
@@ -108,6 +131,8 @@ namespace physics_mujoco {
     JointGroup::~JointGroup() {
         mju_free(tmp_res_);
         delete kdl_fk_solver_;
+        delete kdl_ik_vel_solver_;
+        delete kdl_ik_solver_;
     }
 
     void JointGroup::getPos(std::vector<physics_interface::JointPos> &res) {
@@ -130,6 +155,18 @@ namespace physics_mujoco {
         }
     }
 
+    void JointGroup::setPos(KDL::JntArray &jnt_pos) {
+        if(jnt_pos.data.size() < n_jnt_) {
+            LOG4CXX_ERROR(logger, "Not enough jnt pos when set pos: "
+                                   << jnt_pos.data.size() << " given while " << n_jnt_ << " required.");
+            return;
+        }
+        for(int i=0; i< n_jnt_; ++i) {
+            data_->qpos[qpos_indices_[i]] = jnt_pos(i);
+        }
+        mj_step1(model_, data_);
+    }
+
     KDL::Frame JointGroup::eefPos() {
         int eef_id = link_ids_[link_ids_.size()-1];
         LOG4CXX_DEBUG(logger, "get end effector pos for " << mj_id2name_err(model_, mjOBJ_BODY, eef_id));
@@ -148,22 +185,13 @@ namespace physics_mujoco {
         kdl_fk_solver_->JntToCart(kdl_jnt_pos, res);
         LOG4CXX_DEBUG(logger, "FK res: [ " << res.p[0] << ", " << res.p[1] << ", " << res.p[2] << ']');
         return res;
-        /*
-        Eigen::Affine3d transform = Eigen::Affine3d::Identity();
-        transform.translate(Eigen::Vector3d(res.p[0],
-                                            res.p[1],
-                                            res.p[2]));
+    }
 
-        /// Note that the data of quaternion is ordered as [w,x,y,z] in Eigen which is the same as mujoco.
-
-        double qw, qx, qy, qz;
-        res.M.GetQuaternion(qx, qy, qz, qw);
-        transform.rotate(Eigen::Quaterniond(qw,
-                                            qx,
-                                            qy,
-                                            qz));
-        return transform;
-         */
+    KDL::JntArray JointGroup::IK(const KDL::Frame& tip_pos) {
+        KDL::JntArray res(n_jnt_);
+        LOG4CXX_DEBUG(logger, "Compute IK for tip: " << KDLFrameToString(tip_pos));
+        kdl_ik_solver_->CartToJnt(kdl_jnt_default_, tip_pos, res);
+        return res;
     }
 
     bool JointGroup::inCollision() {
