@@ -1,7 +1,7 @@
 add_executable(demo demo.cpp)
 target_link_libraries(demo ${libmujoco} ${libglfw} ${GLEW_LIBRARIES} OpenGL::GL physics_mujoco
         #ik
-        ${libkdl})
+        ${libkdl} ${OMPL_LIBRARIES})
 target_include_directories(demo
         PRIVATE
         ${MUJOCO_INCLUDE_DIR}
@@ -9,7 +9,8 @@ target_include_directories(demo
         ${PHYSICS_MUJOCO_INCLUDE_DIR}
         #${FABRIK_INCLUDE_DIR}
         ${KDL_INCLUDE_DIR}
-        ${EIGEN3_INCLUDE_DIR})
+        ${EIGEN3_INCLUDE_DIR}
+        ${OMPL_INCLUDE_DIRS})
 
 add_executable(basic basic.cpp)
 target_link_libraries(basic ${libmujoco} ${libglfw} ${GLEW_LIBRARIES} OpenGL::GL)

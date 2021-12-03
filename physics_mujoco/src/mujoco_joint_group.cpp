@@ -39,6 +39,7 @@ namespace physics_mujoco {
         kdl_jnt_max_.resize(n_jnt_);
         kdl_jnt_min_.resize(n_jnt_);
         kdl_jnt_default_.resize(n_jnt_);
+        is_limited_.resize(n_jnt_);
         SetToZero(kdl_jnt_default_);
         for(int i=0; i<chain_.getNrOfSegments(); ++i) {
             link_ids_[i] = tree.mujoco_link_id(chain_.getSegment(i).getName());
@@ -53,6 +54,7 @@ namespace physics_mujoco {
                 kdl_jnt_min_(i) = -M_PI;
                 kdl_jnt_max_(i) = M_PI;
             }
+            is_limited_[i] = model_->jnt_limited[joint_id];
         }
         std::ostringstream tmp_sstr;
         tmp_sstr << '[';
@@ -142,6 +144,15 @@ namespace physics_mujoco {
         for(int i=0; i< n_jnt_; ++i) {
             /// @todo multi joint support
             res[i] = data_->qpos[qpos_indices_[i]];
+        }
+    }
+
+    void JointGroup::getPos(KDL::JntArray &res) {
+        if(res.data.size() != n_jnt_) {
+            res.resize(n_jnt_);
+        }
+        for(int i=0; i< n_jnt_; ++i) {
+            res(i) = data_->qpos[qpos_indices_[i]];
         }
     }
 

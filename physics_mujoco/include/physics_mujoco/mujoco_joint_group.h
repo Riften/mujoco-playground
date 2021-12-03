@@ -30,12 +30,17 @@ namespace physics_mujoco {
                    const std::string& end_link_name);
         ~JointGroup() override;
         void getPos(std::vector<physics_interface::JointPos>& res) override;
+        void getPos(KDL::JntArray& res);
         void getVel(std::vector<physics_interface::JointVel>& res) override;
         void setPos(KDL::JntArray & jnt_pos);
         KDL::Frame eefPos();
         KDL::Frame FK();
         KDL::JntArray IK(const KDL::Frame& tip_pos);
         size_t size() const {return n_jnt_;}
+        double lowerBound(int i) const {return kdl_jnt_min_(i);};
+        double upperBound(int i) const {return kdl_jnt_max_(i);};
+        bool isLimited(int i) const { return is_limited_[i];}
+
         /**
          * Whether links in this group is in collision with any geoms.
          * @return
@@ -66,6 +71,7 @@ namespace physics_mujoco {
         std::vector<int> qvel_indices_;
         std::vector<int> link_ids_;
         std::vector<int> joint_ids_;
+        std::vector<bool> is_limited_;
         std::vector<physics_interface::JointPos> target_pos_;
         // std::vector<physics_interface::JointPos> target_pos_inc_;
         size_t n_jnt_;
@@ -92,6 +98,7 @@ namespace physics_mujoco {
         KDL::JntArray kdl_jnt_min_;
         KDL::JntArray kdl_jnt_max_;
         KDL::JntArray kdl_jnt_default_;
+
     };
 }
 

@@ -3,7 +3,8 @@ add_library(physics_mujoco
         src/mujoco_joint_controller.cpp
         src/mujoco_kinematic_tree.cpp
         src/utils.cpp
-        src/body_tree.cpp)
+        src/body_tree.cpp
+        src/mujoco_state_validity_checker.cpp)
 
 target_link_libraries(physics_mujoco ${libmujoco} ${OMPL_LIBRARIES} ${Log4cxx_LIBRARY} ${libkdl})
 
