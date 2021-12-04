@@ -40,7 +40,7 @@ namespace physics_mujoco {
         kdl_jnt_min_.resize(n_jnt_);
         kdl_jnt_default_.resize(n_jnt_);
         is_limited_.resize(n_jnt_);
-        SetToZero(kdl_jnt_default_);
+        // SetToZero(kdl_jnt_default_);
         for(int i=0; i<chain_.getNrOfSegments(); ++i) {
             link_ids_[i] = tree.mujoco_link_id(chain_.getSegment(i).getName());
             int joint_id = tree.mujoco_joint_id(chain_.getSegment(i).getJoint().getName());
@@ -54,6 +54,7 @@ namespace physics_mujoco {
                 kdl_jnt_min_(i) = -M_PI;
                 kdl_jnt_max_(i) = M_PI;
             }
+            kdl_jnt_default_(i) = (kdl_jnt_max_(i) + kdl_jnt_min_(i))/2;
             is_limited_[i] = model_->jnt_limited[joint_id];
         }
         std::ostringstream tmp_sstr;
@@ -63,6 +64,9 @@ namespace physics_mujoco {
         }
         tmp_sstr << ']';
         LOG4CXX_DEBUG(logger, "qpos_indices_:" << tmp_sstr.str());
+        LOG4CXX_DEBUG(logger, "Minimum joint position: " << KDLJntArrayToString(kdl_jnt_min_));
+        LOG4CXX_DEBUG(logger, "Minimum joint position: " << KDLJntArrayToString(kdl_jnt_max_));
+        LOG4CXX_DEBUG(logger, "Default joint position: " << KDLJntArrayToString(kdl_jnt_default_));
 
         // mem alloc for tmp_res_
         /// @todo Array size may be insufficient if one joint have multi velocity
@@ -81,6 +85,7 @@ namespace physics_mujoco {
         // create kdl solver
         kdl_fk_solver_ = new KDL::ChainFkSolverPos_recursive(chain_);
         kdl_ik_vel_solver_ = new KDL::ChainIkSolverVel_pinv(chain_);
+
         kdl_ik_solver_ = new KDL::ChainIkSolverPos_NR_JL(chain_,
                                                          kdl_jnt_min_,
                                                          kdl_jnt_max_,
@@ -88,6 +93,8 @@ namespace physics_mujoco {
                                                          *kdl_ik_vel_solver_,
                                                          100,
                                                          1e-6);
+
+        // kdl_ik_solver_ = new KDL::ChainIkSolverPos_NR_JL(chain_, *kdl_fk_solver_, *kdl_ik_vel_solver_);
     }
 /**
     JointGroup::JointGroup(mjModel *model, mjData *data,

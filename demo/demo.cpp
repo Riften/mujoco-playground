@@ -201,8 +201,11 @@ void keyboard(GLFWwindow* window, int key, int scancode, int act, int mods)
     // V: Compute IK and set pose
     if( act == GLFW_PRESS && key == GLFW_KEY_V) {
         KDL::JntArray ik_res = jointGroup->IK(copied_tip);
+        KDL::JntArray after_ik;
         LOG4CXX_DEBUG(logger, "Set to ik res: " << physics_mujoco::KDLJntArrayToString(ik_res));
         jointGroup->setPos(ik_res);
+        jointGroup->getPos(after_ik);
+        LOG4CXX_DEBUG(logger, "After IK: " << physics_mujoco::KDLJntArrayToString(after_ik));
         KDL::Frame current_tip = jointGroup->eefPos();
         LOG4CXX_DEBUG(logger, "Difference: " << physics_mujoco::KDLVectorToString(copied_tip.p - current_tip.p));
     }

@@ -35,6 +35,11 @@ namespace physics_mujoco {
         void setPos(KDL::JntArray & jnt_pos);
         KDL::Frame eefPos();
         KDL::Frame FK();
+        /**
+         * @todo IK should return an error code if there is no solution.
+         * @param tip_pos
+         * @return
+         */
         KDL::JntArray IK(const KDL::Frame& tip_pos);
         size_t size() const {return n_jnt_;}
         double lowerBound(int i) const {return kdl_jnt_min_(i);};
