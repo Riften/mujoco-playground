@@ -3,6 +3,8 @@
 //
 
 #include <physics_mujoco/mujoco_joint_group.h>
+#include <ompl/base/spaces/RealVectorStateSpace.h>
+#include <physics_mujoco/mujoco_state_validity_checker.h>
 #include <log4cxx/logger.h>
 
 static log4cxx::LoggerPtr logger = log4cxx::Logger::getLogger("JointGroup");
@@ -95,6 +97,8 @@ namespace physics_mujoco {
                                                          1e-6);
 
         // kdl_ik_solver_ = new KDL::ChainIkSolverPos_NR_JL(chain_, *kdl_fk_solver_, *kdl_ik_vel_solver_);
+        /// Initialize ompl motion planner
+        _init_ompl();
     }
 /**
     JointGroup::JointGroup(mjModel *model, mjData *data,
@@ -272,5 +276,57 @@ namespace physics_mujoco {
         ///=====================================
     }
 
+
+    /// OMPL
+    /// @todo Define Kinematics State Space for JointGroup.
+    void JointGroup::_init_ompl() {
+        // Use RealVectorStateSpace as state space
+        auto state_spece = std::make_shared<ompl::base::RealVectorStateSpace>(n_jnt_);
+
+        // Set bounds for space
+        ompl::base::RealVectorBounds bounds(n_jnt_);
+        for(int i=0; i<n_jnt_; ++i ) {
+            if(isLimited(i)) {
+                bounds.setLow(i, lowerBound(i));
+                bounds.setHigh(i, upperBound(i));
+            }
+        }
+        state_spece->setBounds(bounds);
+
+        simple_setup_ = std::make_shared<ompl::geometric::SimpleSetup>(state_spece);
+        auto validity_checker(std::make_shared<physics_mujoco::StateValidityChecker>(this, simple_setup_->getSpaceInformation()));
+        simple_setup_->setStateValidityChecker(validity_checker);
+    }
+
+
+    bool JointGroup::motionPlan(const KDL::JntArray &start,
+                                const KDL::JntArray &end,
+                                ompl::geometric::PathGeometric &res) {
+        /// @todo check if there is enough pos in start and end
+
+
+        LOG4CXX_DEBUG(logger, "Motion Plan from " << physics_mujoco::KDLJntArrayToString(start) << " to " << physics_mujoco::KDLJntArrayToString(end));
+        ompl::base::ScopedState<> start_state(simple_setup_->getStateSpace());
+        ompl::base::ScopedState<> goal_state(simple_setup_->getStateSpace());
+        for(int i=0; i< n_jnt_; ++i) {
+            start_state[i] = start(i);
+            goal_state[i] = end(i);
+        }
+        //start.random();
+        //goal.random();
+        simple_setup_->clear();
+        simple_setup_->clearStartStates();
+        simple_setup_->setStartAndGoalStates(start_state, goal_state);
+        ompl::base::PlannerStatus solved = simple_setup_->solve(1.0);
+        if(solved) {
+            simple_setup_->simplifySolution();
+            res = simple_setup_->getSolutionPath();
+            return true;
+        } else {
+            std::cout << "solution not found" << std::endl;
+            LOG4CXX_ERROR(logger, "Motion plan solution not found");
+            return false;
+        }
+    }
 
 }

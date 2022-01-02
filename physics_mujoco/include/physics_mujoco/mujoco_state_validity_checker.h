@@ -28,6 +28,7 @@ namespace physics_mujoco {
         }
 
     private:
+        /// We use raw pointer directly because checker is created within JointGroup most time.
         JointGroup* joint_group_;
     };
 }

@@ -20,6 +20,9 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
+/// OMPL
+#include <ompl/geometric/SimpleSetup.h>
+
 namespace physics_mujoco {
     // typedef  Eigen::Transform<mjtNum, 3, Eigen::Affine> Affine3d;
 
@@ -69,6 +72,10 @@ namespace physics_mujoco {
         // mjModel * mj_model() {return model_;}
         // mjData * mj_data() {return data_;}
         friend void control_callback_incremental(const mjModel* model, mjData * data);
+
+        /// OMPL
+        bool motionPlan(const KDL::JntArray& start, const KDL::JntArray& end, ompl::geometric::PathGeometric& res);
+
     private:
         const mjModel * model_;
         mjData * data_;
@@ -104,6 +111,10 @@ namespace physics_mujoco {
         KDL::JntArray kdl_jnt_max_;
         KDL::JntArray kdl_jnt_default_;
 
+        /// OMPL
+        ompl::geometric::SimpleSetupPtr simple_setup_;
+        // ompl::base::SpaceInformationPtr state_spece_;
+        void _init_ompl();
     };
 }
 
