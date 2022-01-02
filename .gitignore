@@ -1,5 +1,6 @@
 .idea
 cmake-build-debug
 resources/panda_arm_hand
+resources/ur5e
 mujoco210/*
 extern/*
