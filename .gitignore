@@ -4,3 +4,9 @@ resources/panda_arm_hand
 resources/ur5e
 mujoco210/*
 extern/*
+!extern/pybind11
+build
+_skbuild
+physics_mujoco.egg-info
+dist
+.ipynb_checkpoints

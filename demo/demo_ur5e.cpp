@@ -63,10 +63,8 @@ physics_mujoco::JointGroup* jointGroup = nullptr;
 KDL::Frame copied_tip;
 
 // OMPL
-ompl::geometric::SimpleSetupPtr simple_setup;
 KDL::JntArray start_pos;
 KDL::JntArray goal_pos;
-ompl::geometric::PathGeometric* solution = nullptr;
 
 // Show M
 void showM() {
@@ -110,40 +108,27 @@ void showContact() {
 }
 
 void showSolution() {
-    solution = &simple_setup->getSolutionPath();
-    solution->interpolate(20);
+    ompl::geometric::PathGeometric solution = jointGroup->currentSolution();
+    solution.interpolate(20);
 
-    if(solution != nullptr) {
-        KDL::JntArray tmp_pos(jointGroup->size());
-        for(int i=0; i<solution->getStateCount(); ++i) {
-            auto state = solution->getState(i)->as<ompl::base::RealVectorStateSpace::StateType>();
-            for(int j=0; j<jointGroup->size(); ++j) {
-                tmp_pos(j) = (*state)[j];
-            }
-            jointGroup->setPos(tmp_pos);
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    KDL::JntArray tmp_pos(jointGroup->size());
+    for(int i=0; i<solution.getStateCount(); ++i) {
+        auto state = solution.getState(i)->as<ompl::base::RealVectorStateSpace::StateType>();
+        for(int j=0; j<jointGroup->size(); ++j) {
+            tmp_pos(j) = (*state)[j];
         }
+        jointGroup->setPos(tmp_pos);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
+
 
 }
 
 void simpleMotionPlan() {
     LOG4CXX_DEBUG(logger, "Motion Plan from " << physics_mujoco::KDLJntArrayToString(start_pos) << " to " << physics_mujoco::KDLJntArrayToString(goal_pos));
-    ompl::base::ScopedState<> start(simple_setup->getStateSpace());
-    ompl::base::ScopedState<> goal(simple_setup->getStateSpace());
-    for(int i=0; i<jointGroup->size(); ++i) {
-        start[i] = start_pos(i);
-        goal[i] = goal_pos(i);
-    }
-    //start.random();
-    //goal.random();
-    simple_setup->clear();
-    simple_setup->clearStartStates();
-    simple_setup->setStartAndGoalStates(start, goal);
-    ompl::base::PlannerStatus solved = simple_setup->solve(1.0);
-    if(solved) {
-        simple_setup->simplifySolution();
-        simple_setup->getSolutionPath().print(std::cout);
+
+    if(jointGroup->motionPlan(start_pos, goal_pos)) {
         std::thread th(showSolution);
         th.detach();
     } else {
@@ -217,22 +202,12 @@ void keyboard(GLFWwindow* window, int key, int scancode, int act, int mods)
 
     // 1: Store current pos to start_pos
     if( act == GLFW_PRESS && key == GLFW_KEY_1) {
-        ompl::base::ScopedState<> start(simple_setup->getStateSpace());
-        start.random();
-        for(int i = 0; i< jointGroup->size(); ++i) {
-            start_pos(i) = start[i];
-        }
-        jointGroup->setPos(start_pos);
+        start_pos = jointGroup->setRandom();
         LOG4CXX_DEBUG(logger, "Record start pos: " << physics_mujoco::KDLJntArrayToString(start_pos));
     }
 
     if( act == GLFW_PRESS && key == GLFW_KEY_2) {
-        ompl::base::ScopedState<> goal(simple_setup->getStateSpace());
-        goal.random();
-        for(int i = 0; i< jointGroup->size(); ++i) {
-            goal_pos(i) = goal[i];
-        }
-        jointGroup->setPos(goal_pos);
+        goal_pos = jointGroup->setRandom();
         LOG4CXX_DEBUG(logger, "Record goal pos: " << physics_mujoco::KDLJntArrayToString(goal_pos));
     }
 }
@@ -349,13 +324,13 @@ int main(int argc, char* argv[]) {
     std::cout << "Number of DOFs: " << model->nv << std::endl;
     std::cout << "Number of actuators/controls: " << model -> nu << std::endl;
 
-
-    //===============
-
     // make data
     model_data = mj_makeData(model);
-    // std::cout << tree.kdl_tree().getRootSegment()->first << std::endl;
 
+    //======= Create Kinematic Tree
+    physics_mujoco::KinematicTree tree(model, "shoulder_link", "wrist_3_link");
+    jointGroup = new physics_mujoco::JointGroup(model_data, tree, "kdl_root", "wrist_3_link");
+    //===============
 
 
     GLFWwindow* window = glfwCreateWindow(1200, 900, "Demo", NULL, NULL);
