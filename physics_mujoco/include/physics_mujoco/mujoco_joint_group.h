@@ -79,6 +79,7 @@ namespace physics_mujoco {
         bool motionPlan(const KDL::JntArray& start, const KDL::JntArray& end);
         ompl::geometric::PathGeometric& currentSolution();
 
+
     private:
         const mjModel * model_;
         mjData * data_;

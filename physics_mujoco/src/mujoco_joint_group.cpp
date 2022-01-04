@@ -310,8 +310,10 @@ namespace physics_mujoco {
     }
 
 
+
     bool JointGroup::motionPlan(const KDL::JntArray &start, const KDL::JntArray &end) {
         /// @todo check if there is enough pos in start and end
+
         LOG4CXX_DEBUG(logger, "Motion Plan from " << physics_mujoco::KDLJntArrayToString(start) << " to " << physics_mujoco::KDLJntArrayToString(end));
         ompl::base::ScopedState<> start_state(simple_setup_->getStateSpace());
         ompl::base::ScopedState<> goal_state(simple_setup_->getStateSpace());
@@ -324,7 +326,6 @@ namespace physics_mujoco {
         simple_setup_->clear();
         simple_setup_->clearStartStates();
         simple_setup_->setStartAndGoalStates(start_state, goal_state);
-
         ompl::base::PlannerStatus solved = simple_setup_->solve(1.0);
 
         // PlannerStatus overrides operator bool().
@@ -345,11 +346,15 @@ namespace physics_mujoco {
             res = simple_setup_->getSolutionPath();
             return true;
         } else {
+
             return false;
         }
     }
 
+<<<<<<< HEAD
     ompl::geometric::PathGeometric &JointGroup::currentSolution() {
         return simple_setup_->getSolutionPath();
     }
+=======
+>>>>>>> ff657ec7b5c0f2817814dc6d188e5cb02e2767b7
 }
