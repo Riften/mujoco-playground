@@ -351,10 +351,8 @@ namespace physics_mujoco {
         }
     }
 
-<<<<<<< HEAD
+
     ompl::geometric::PathGeometric &JointGroup::currentSolution() {
         return simple_setup_->getSolutionPath();
     }
-=======
->>>>>>> ff657ec7b5c0f2817814dc6d188e5cb02e2767b7
 }

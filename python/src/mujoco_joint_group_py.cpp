@@ -5,11 +5,13 @@
 #include "mujoco_core_py.h"
 #include "mujoco_kinematic_tree_py.h"
 #include "mujoco_joint_group_py.h"
+#include <physics_mujoco/utils.h>
 
 
 namespace py = pybind11;
 
 PYBIND11_MODULE(_physics_mujoco, m) {
+    m.def("initLogSystem", physics_mujoco::initLogSystem);
     bind_mujoco(m);
     bind_kinematic_tree(m);
     bind_joint_group(m);
