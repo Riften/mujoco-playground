@@ -14,6 +14,7 @@ namespace py = pybind11;
 PYBIND11_MODULE(_physics_mujoco, m) {
     m.def("initLogSystem", physics_mujoco::initLogSystem);
     bind_mujoco(m);
+    bind_mujoco_render(m);
     bind_kinematic_tree(m);
     bind_joint_group(m);
 }

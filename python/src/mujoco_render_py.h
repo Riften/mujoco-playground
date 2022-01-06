@@ -15,9 +15,10 @@ void bind_mujoco_render (py::module& m){
     RenderT.def(py::init<mjModel*, mjData*, const std::string&, int, int, bool>(),
             py::arg("mjModel"),
             py::arg("mjData"),
-            py::arg("window_name") = "Render"),
+            py::arg("window_name") = "Render",
             py::arg("window_width") = 1200,
-            py::arg("window_height") = 900;
+            py::arg("window_height") = 900,
+            py::arg("paused") = false);
 }
 
 #endif //MUJOCO_PLAYGROUND_MUJOCO_RENDER_PY_H

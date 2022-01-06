@@ -21,6 +21,7 @@ namespace mujoco_render {
                int window_width = 1200,
                int window_height = 900,
                bool paused = true);
+        std::thread& render_thread() {return *render_thread_;}
         ~Render();
     private:
         mjModel* mj_model_;

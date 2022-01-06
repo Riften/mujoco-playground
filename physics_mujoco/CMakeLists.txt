@@ -6,6 +6,8 @@ add_library(physics_mujoco
         src/utils.cpp
         src/body_tree.cpp
         src/mujoco_state_validity_checker.cpp)
+
+# set -fPIC to build static lib
 set_property(TARGET physics_mujoco PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(physics_mujoco ${libmujoco} ${OMPL_LIBRARIES} ${Log4cxx_LIBRARY} ${libkdl})
 

@@ -23,6 +23,9 @@
 #include <ompl/base/spaces/RealVectorStateSpace.h>
 #include <ompl/geometric/SimpleSetup.h>
 
+#include <mujoco_render/mujoco_render.h>
+#include <thread>
+
 
 // Logger
 log4cxx::LoggerPtr logger = log4cxx::Logger::getLogger("demo");
@@ -101,10 +104,10 @@ void showContact() {
     std::cout << "Contacts: ";
     for(int i=0; i < model_data->ncon; ++i) {
         std::cout << '('
-            << mj_id2name(model, mjOBJ_BODY, model->geom_bodyid[model_data->contact[i].geom1])
-            << ','
-            << mj_id2name(model, mjOBJ_BODY, model->geom_bodyid[model_data->contact[i].geom2])
-            << ") ";
+                  << mj_id2name(model, mjOBJ_BODY, model->geom_bodyid[model_data->contact[i].geom1])
+                  << ','
+                  << mj_id2name(model, mjOBJ_BODY, model->geom_bodyid[model_data->contact[i].geom2])
+                  << ") ";
     }
     std::cout << std::endl;
 }
@@ -323,161 +326,14 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-
-    /**
-    mj_saveLastXML("/home/yongxi/Workspace/mujoco_playground/resources/panda_arm_hand.xml",
-                   model,
-                   error,
-                   1000);
-    */
-
-    std::cout << "Joint Names:" << std::endl;
-    for(int i=0; i<model->njnt; ++i) {
-        std::cout << mj_id2name(model, mjOBJ_JOINT, i) << ", ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "Body Names:" << std::endl;
-    for (int i=0; i< model->nbody; ++i) {
-        std::cout << mj_id2name(model, mjOBJ_BODY, i) << ", ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "Number of position coordinates: " << model -> nq << std::endl;
-    std::cout << "Number of DOFs: " << model->nv << std::endl;
-    std::cout << "Number of actuators/controls: " << model -> nu << std::endl;
-
-    physics_mujoco::KinematicTree tree(model, "panda_link1", "panda_link7");
-
-    tree.print_kdl_tree();
-
-
-    //===============
-
-    // make data
     model_data = mj_makeData(model);
-    // std::cout << tree.kdl_tree().getRootSegment()->first << std::endl;
-    jointGroup = new physics_mujoco::JointGroup(model_data, tree, "kdl_root", "panda_link7");
-    start_pos.resize(jointGroup->size());
-    goal_pos.resize(jointGroup->size());
-
-    /// ================ OMPL
-    auto state_space(std::make_shared<ompl::base::RealVectorStateSpace>(jointGroup->size()));
-    ompl::base::RealVectorBounds bounds(jointGroup->size());
-    for(int i=0; i<jointGroup->size(); ++i ) {
-        if(jointGroup->isLimited(i)) {
-            bounds.setLow(i, jointGroup->lowerBound(i));
-            bounds.setHigh(i, jointGroup->upperBound(i));
-        }
-    }
-    state_space->setBounds(bounds);
-
-    simple_setup = std::make_shared<ompl::geometric::SimpleSetup>(state_space);
-    auto validity_checker(std::make_shared<physics_mujoco::StateValidityChecker>(jointGroup, simple_setup->getSpaceInformation()));
-    simple_setup->setStateValidityChecker(validity_checker);
-
-    // start state
 
 
-    /// ===============
 
-    GLFWwindow* window = glfwCreateWindow(1200, 900, "Demo", NULL, NULL);
-    glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
-
-    mjv_defaultCamera(&cam);
-    mjv_defaultOption(&opt);
-    mjv_defaultScene(&scn);
-    mjr_defaultContext(&con);
-
-    // create scene and context
-    mjv_makeScene(model, &scn, 2000);
-    mjr_makeContext(model, &con, mjFONTSCALE_150);
-
-    // Set callback
-    glfwSetKeyCallback(window, keyboard);
-    glfwSetCursorPosCallback(window, mouse_move);
-    glfwSetMouseButtonCallback(window, mouse_button);
-    glfwSetScrollCallback(window, scroll);
-
-    // Set control callback
-
-    controllers.emplace_back(model, model_data, "panda_joint1");
-    controllers.emplace_back(model, model_data, "panda_joint2");
-    controllers.emplace_back(model, model_data, "panda_joint3");
-    controllers.emplace_back(model, model_data, "panda_joint4");
-    controllers.emplace_back(model, model_data, "panda_joint5");
-    controllers.emplace_back(model, model_data, "panda_joint6");
-    controllers.emplace_back(model, model_data, "panda_joint7");
-    mjcb_control = damping_controller;
-
-    /**
-    std::vector<std::string> joint_names = {"panda_joint1",
-                                            "panda_joint2",
-                                            "panda_joint3",
-                                            "panda_joint4",
-                                            "panda_joint5",
-                                            "panda_joint6",
-                                            "panda_joint7"};
-
-    std::vector<std::string> link_names = {"panda_link1",
-                                           "panda_link2",
-                                           "panda_link3",
-                                           "panda_link4",
-                                           "panda_link5",
-                                           "panda_link6",
-                                           "panda_link7"};
-
-    jointGroup = new physics_mujoco::JointGroup(model, model_data, joint_names, link_names);
-    **/
-    // Simulate the start situation
-    mj_step(model, model_data);
-
-    for(int i=0; i<model->nq-2; ++i) {
-        model_data->qpos[i] = -0.5;
-    }
-    //model_data->qpos[0] = -0.885962;
-    //model_data->qpos[1] = 1.76342;
-    //model_data->qpos[2] = 0.907294;
-    //model_data->qpos[3] = -2.57793;
-    //model_data->qpos[4] = 1.70364;
-    //model_data->qpos[5] = 2.39712;
-    //model_data->qpos[6] = -1.38415;
-
-
-    for(int i=0; i<model->nv-2; ++i) {
-        model_data->qvel[i] = 0;
-    }
-
-    mj_step1(model, model_data);
-
-    while( !glfwWindowShouldClose(window) )
-    {
-        // advance interactive simulation for 1/60 sec
-        //  Assuming MuJoCo can simulate faster than real-time, which it usually can,
-        //  this loop will finish on time for the next frame to be rendered at 60 fps.
-        //  Otherwise add a cpu timer and exit this loop when it is time to render.
-        mjtNum simstart = model_data->time;
-
-        // get framebuffer viewport
-        mjrRect viewport = {0, 0, 0, 0};
-        glfwGetFramebufferSize(window, &viewport.width, &viewport.height);
-
-        // update scene and render
-        mjv_updateScene(model, model_data, &opt, NULL, &cam, mjCAT_ALL, &scn);
-        mjr_render(viewport, &scn, &con);
-
-        // swap OpenGL buffers (blocking call due to v-sync)
-        glfwSwapBuffers(window);
-
-        // process pending GUI events, call GLFW callbacks
-        glfwPollEvents();
-
-        if(!paused) {
-            while (model_data->time - simstart < 1.0 / 60.0)
-                mj_step(model, model_data);
-        }
-    }
-
+    std::thread* tmp_thread = new std::thread ([](mjModel* model1, mjData* mjData1){
+        mujoco_render::Render render(model1, mjData1);
+    }, model, model_data);
+    tmp_thread->join();
+    // render.render_thread().join();
     return 0;
 }

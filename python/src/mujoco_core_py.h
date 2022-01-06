@@ -17,9 +17,9 @@ namespace py = pybind11;
 void bind_mujoco(py::module &m) {
     py::class_<mjData> mjDataT(m, "mjData");
     py::class_<mjModel> mjModelT(m, "mjModel");
-    mjModelT.def("make_data", [](mjModel& self){
-            return mj_makeData(&self);
-        });
+    mjModelT.def("makeData", [](mjModel& self){
+        return mj_makeData(&self);
+    });
     m.def("loadModelXML", [](const std::string& file_path) {
         char err[1000];
         mjModel* result = mj_loadXML(file_path.c_str(), nullptr, err, 1000);

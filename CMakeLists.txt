@@ -11,12 +11,16 @@ SET(CMAKE_INSTALL_RPATH $ORIGIN)
 
 find_library(libmujoco mujoco210 HINTS ${CMAKE_CURRENT_SOURCE_DIR}/mujoco210/bin)
 find_library(libglfw libglfw.so.3 HINTS ${CMAKE_CURRENT_SOURCE_DIR}/mujoco210/bin)
-find_library(libglew glew HINTS ${CMAKE_CURRENT_SOURCE_DIR}/mujoco210/bin)
+# Use the static version of glfw. It seems that the system glfw lib may raise error
+# find_library(libglfw libglfw3.a HINTS ${CMAKE_CURRENT_SOURCE_DIR}/mujoco210/bin)
+# find_library(libglew glew HINTS ${CMAKE_CURRENT_SOURCE_DIR}/mujoco210/bin)
+find_package(GLEW REQUIRED)
+SET(libglew ${GLEW_LIBRARIES})
 find_library(libgl GL)
 find_library(libkdl liborocos-kdl.so.1.5.1 HINTS ${CMAKE_CURRENT_SOURCE_DIR}/extern/kdl-1.5.1/lib)
 find_library(libpsopt libPSOPT.a HINTS ${CMAKE_CURRENT_SOURCE_DIR}/extern/local/lib/PSOPT)
 find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
+
 find_package(ompl REQUIRED)
 find_package(Log4cxx REQUIRED)
 # KDL Chain Solver use Eigen3 publicly
@@ -29,7 +33,7 @@ set(KDL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extern/kdl-1.5.1/include)
 set(LOCAL_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/extern/local/include)
 MESSAGE(STATUS "CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}")
 MESSAGE(STATUS "Found mujoco ${libmujoco}")
-MESSAGE(STATUS "Found glwf ${libglfw}")
+MESSAGE(STATUS "Found glfw ${libglfw}")
 MESSAGE(STATUS "Found glew ${libglew}")
 MESSAGE(STATUS "Found OpenGL ${OPENGL_LIBRARY}")
 MESSAGE(STATUS "Found GLEW ${GLEW_LIBRARIES}")
@@ -79,6 +83,6 @@ if(SKBUILD)
     install(FILES  "extern/kdl-1.5.1/lib/liborocos-kdl.so.1.5.1"
             "extern/kdl-1.5.1/lib/liborocos-kdl.so.1.5"
             "extern/kdl-1.5.1/lib/liborocos-kdl.so"
-            ${libmujoco} DESTINATION .)
+            ${libmujoco} ${libglew} ${libglfw} DESTINATION .)
     install(TARGETS physics_mujoco _physics_mujoco DESTINATION .)
 endif()
