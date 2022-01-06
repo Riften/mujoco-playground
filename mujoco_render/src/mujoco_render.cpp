@@ -3,9 +3,11 @@
 //
 
 #include <mujoco_render/mujoco_render.h>
+#include <log4cxx/logger.h>
 
 namespace mujoco_render {
 
+    static log4cxx::LoggerPtr logger = log4cxx::Logger::getLogger("Render");
 
     Render::Render(mjModel *model, mjData *data, const std::string& window_name, int window_width, int window_height, bool paused )
     : mj_model_(model)
@@ -25,14 +27,19 @@ namespace mujoco_render {
         mjv_makeScene(model, &mjv_scene_, 2000);
         mjr_makeContext(model, &mjr_context_, mjFONTSCALE_150);
 
+        interrupted_ = false;
         render_thread_ = new std::thread(render_thread_fn, this);
     }
 
     Render::~Render() {
         // Free thread
+        LOG4CXX_DEBUG(logger, "Wait for render thread to stop.")
+        interrupted_ = true;
+        render_thread_->join();
     }
     void render_thread_fn(Render* render) {
-        while( !glfwWindowShouldClose(render->window_) )
+        LOG4CXX_DEBUG(logger, "Mujoco Render Start");
+        while( !glfwWindowShouldClose(render->window_) && !render->interrupted_)
         {
             // advance interactive simulation for 1/60 sec
             //  Assuming MuJoCo can simulate faster than real-time, which it usually can,
@@ -60,5 +67,6 @@ namespace mujoco_render {
                     mj_step(render->mj_model_, render->mj_data_);
             }
         }
+        LOG4CXX_DEBUG(logger, "Mujoco Render End");
     }
 }

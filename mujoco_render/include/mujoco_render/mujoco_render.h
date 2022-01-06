@@ -8,6 +8,7 @@
 #include "glfw3.h"
 #include <string>
 #include <thread>
+#include <atomic>
 
 namespace mujoco_render {
     class Render; // forward decleration
@@ -31,6 +32,7 @@ namespace mujoco_render {
         std::thread* render_thread_;
         GLFWwindow* window_;
         bool paused_;
+        std::atomic<bool> interrupted_;  // An atomic variable used to interrupt render thread.
         /// @note argument of thread can not be reference.
         friend void render_thread_fn(Render* render);
     };

@@ -5,6 +5,7 @@
 #include "mujoco_core_py.h"
 #include "mujoco_kinematic_tree_py.h"
 #include "mujoco_joint_group_py.h"
+#include "mujoco_render_py.h"
 #include <physics_mujoco/utils.h>
 
 

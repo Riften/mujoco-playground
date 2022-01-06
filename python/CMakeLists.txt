@@ -7,6 +7,7 @@ target_include_directories(_physics_mujoco
         ${MUJOCO_INCLUDE_DIR}
         ${OMPL_INCLUDE_DIRS}
         ${Log4cxx_INCLUDE_DIR}
-        ${KDL_INCLUDE_DIR})
+        ${KDL_INCLUDE_DIR}
+        ${MUJOCO_RENDER_INCLUDE_DIR})
 
-target_link_libraries(_physics_mujoco PRIVATE ${libglfw} ${GLEW_LIBRARIES} OpenGL::GL physics_mujoco)
+target_link_libraries(_physics_mujoco PRIVATE ${libglfw} ${GLEW_LIBRARIES} OpenGL::GL physics_mujoco mujoco_render)
