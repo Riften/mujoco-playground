@@ -10,3 +10,4 @@ _skbuild
 physics_mujoco.egg-info
 dist
 .ipynb_checkpoints
+MUJOCO_LOG.TXT
