@@ -5,7 +5,7 @@
 #ifndef MUJOCO_PLAYGROUND_MUJOCO_RENDER_H
 #define MUJOCO_PLAYGROUND_MUJOCO_RENDER_H
 #include <mujoco.h>
-#include "glfw3.h"
+#include <glfw3.h>
 #include <string>
 #include <thread>
 #include <atomic>

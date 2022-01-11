@@ -311,6 +311,8 @@ int main(int argc, char* argv[]) {
 
     if( !glfwInit() )
         mju_error("Could not initialize GLFW");
+    if( !glfwInit() )
+        mju_error("Could not initialize GLFW");
     // char urdf_path[1000] = "/home/yongxi/Workspace/mujoco_playground/resources/panda_arm_hand/panda_arm_hand.urdf";
     char urdf_path[1000] = "/home/yongxi/Workspace/mujoco_playground/resources/panda_arm_hand/collision1.xml";
     // char urdf_path[1000] = "/home/yongxi/Workspace/mujoco_playground/resources/panda_arm_hand/panda_arm_hand.xml";

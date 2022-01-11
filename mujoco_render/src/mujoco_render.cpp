@@ -5,6 +5,10 @@
 #include <mujoco_render/mujoco_render.h>
 #include <log4cxx/logger.h>
 
+// Private headers
+#include "glfw_thread.h"
+#include "render_thread.h"
+
 namespace mujoco_render {
 
     static log4cxx::LoggerPtr logger = log4cxx::Logger::getLogger("Render");

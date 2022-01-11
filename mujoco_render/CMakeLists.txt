@@ -1,4 +1,6 @@
-add_library(mujoco_render src/mujoco_render.cpp)
+add_library(mujoco_render
+        src/mujoco_render.cpp
+        src/glfw_thread.cpp)
 
 target_link_libraries(mujoco_render ${libmujoco} ${libglfw} ${libglew} OpenGL::GL)
 set_property(TARGET mujoco_render PROPERTY POSITION_INDEPENDENT_CODE ON)
