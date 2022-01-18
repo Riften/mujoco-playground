@@ -19,6 +19,8 @@
 // #include <kdl/chainiksolverpos_lma.hpp>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <mutex>
+#include <ostream>
 
 /// OMPL
 #include <ompl/geometric/SimpleSetup.h>
@@ -27,13 +29,37 @@ namespace physics_mujoco {
     // typedef  Eigen::Transform<mjtNum, 3, Eigen::Affine> Affine3d;
 
     class JointGroup: public physics_interface::JointGroup{
+    private:
+        /**
+         * Used to fetch QP for brax.
+         */
+        class QPFetcher {
+        public:
+            QPFetcher(JointGroup& group);
+            QPFetcher(JointGroup& group, const std::vector<std::string>& jnt_names);
+            void setJointIdx(const std::vector<std::string>& jnt_names);
+            double* P() const;
+            size_t size() const;
+        private:
+            bool same_index_;
+            int * mujoco_index_;
+            size_t qp_size_;
+        };
     public:
         JointGroup(mjData * data, KinematicTree &tree,
                    const std::string& start_link_name,
                    const std::string& end_link_name);
         ~JointGroup() override;
+        void setMutex(std::shared_ptr<std::mutex> mtx);
+        void toStream(std::ostream& out);
+
         void getPos(std::vector<physics_interface::JointPos>& res) override;
         void getPos(KDL::JntArray& res);
+        /**
+         * @note This should only be used by python binding.
+         * @return
+         */
+        double* getPos() const;
         void getVel(std::vector<physics_interface::JointVel>& res) override;
         void setPos(KDL::JntArray & jnt_pos);
         KDL::JntArray setRandom();
@@ -49,6 +75,8 @@ namespace physics_mujoco {
         double lowerBound(int i) const {return kdl_jnt_min_(i);};
         double upperBound(int i) const {return kdl_jnt_max_(i);};
         bool isLimited(int i) const { return is_limited_[i];}
+        KDL::Chain& chain() {return chain_;}
+        const KDL::Chain& chain() const {return chain_;}
 
         /**
          * Whether links in this group is in collision with any geoms.
@@ -94,6 +122,9 @@ namespace physics_mujoco {
         std::map<int, int> geom_body_map_;
 
         void control_incremental_impedance();
+
+        /// Mutex to protect the MuJoCo API.
+        std::shared_ptr<std::mutex> mujoco_mutex_ = nullptr;
 
         /// Impedance control parameters
         double kp_ = 1;

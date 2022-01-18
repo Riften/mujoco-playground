@@ -10,7 +10,10 @@
 #include <glfw3.h>
 #include <mutex>
 #include <chrono>
+#include <condition_variable>
+#include <utility>
 #include <log4cxx/logger.h>
+#include <mujoco.h>
 
 namespace mujoco_render {
 
@@ -32,12 +35,18 @@ namespace mujoco_render {
     public:
         typedef std::chrono::time_point<std::chrono::steady_clock, std::chrono::steady_clock::duration> TimePoint;
 
-        explicit RenderThread(mjModel *model, mjData *data, std::mutex *mtx, const std::string &window_name = "MuJoCo",
+        explicit RenderThread(mjModel *model, mjData *data,
+                              std::shared_ptr<std::mutex> mtx,
+                              std::shared_ptr<std::condition_variable> paused_condition,
+                              std::shared_ptr<bool> paused,
+                              std::string window_name = "MuJoCo",
                               int window_width = 1200, int window_height = 900)
-                : mtx_(mtx)
+                : mtx_(std::move(mtx))
+                , paused_(std::move(paused))
+                , paused_condition_(std::move(paused_condition))
                 , window_height_(window_height)
                 , window_width_(window_width)
-                , window_name_(window_name){
+                , window_name_(std::move(window_name)){
             logger = log4cxx::Logger::getLogger("RenderThread");
 
             init_mujoco(model, data);
@@ -137,13 +146,15 @@ namespace mujoco_render {
 
         GLFWwindow *window_;
         log4cxx::LoggerPtr logger;
-        std::mutex *mtx_;
         int window_height_;
         int window_width_;
         std::string window_name_;
 
         // thread instance
         std::thread *thread_;
+        std::shared_ptr<std::mutex> mtx_;
+        std::shared_ptr<std::condition_variable> paused_condition_;
+        std::shared_ptr<bool> paused_;
 
         // mujoco variables
         mjModel *model_ = nullptr;

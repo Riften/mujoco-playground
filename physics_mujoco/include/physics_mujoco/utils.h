@@ -104,6 +104,7 @@ namespace physics_mujoco {
     std::string EigenAffine3dToString(const Eigen::Affine3d& transform);
     KDL::Frame mj_body_kdl_frame(const mjModel *m, int body_id);
     KDL::Frame mj_body_kdl_xframe(const mjData *data, int body_id);
+    void mj_body_names(const mjModel* model, std::vector<std::string>& res);
     void TraverseKDLTree(KDL::SegmentMap::const_iterator node, int indent=0);
 }
 

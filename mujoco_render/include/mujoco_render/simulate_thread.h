@@ -9,6 +9,7 @@
 #include <mujoco.h>
 #include <mutex>
 #include <atomic>
+#include <utility>
 #include <log4cxx/logger.h>
 
 /**
@@ -16,10 +17,15 @@
  */
 class SimulateThread {
 public:
-    SimulateThread(mjModel * model, mjData * data, std::mutex* mtx)
+    SimulateThread(mjModel * model, mjData * data,
+                   std::shared_ptr<std::mutex> mtx,
+                   std::shared_ptr<std::condition_variable> paused_condition,
+                   std::shared_ptr<bool> paused)
     : model_(model)
     , data_(data)
-    , mtx_(mtx)
+    , mtx_(std::move(mtx))
+    , paused_condition_(std::move(paused_condition))
+    , paused_(std::move(paused))
     , exit_(false){
         logger = log4cxx::Logger::getLogger("SimulateThread");
         thread_ = new std::thread([this](){
@@ -35,16 +41,23 @@ public:
 private:
     mjModel * model_;
     mjData * data_;
-    std::mutex* mtx_;
+    std::shared_ptr<std::mutex> mtx_;
+    std::shared_ptr<std::condition_variable> paused_condition_;
+    std::shared_ptr<bool> paused_;
     std::thread* thread_;
     std::atomic<bool> exit_;
     log4cxx::LoggerPtr logger;
     void simulate_loop() {
         LOG4CXX_DEBUG(logger, "Simulate loop starts");
         while(!exit_) {
-            mtx_->lock();
+            std::unique_lock<std::mutex> lock1(*mtx_);
+            if(*paused_) {
+                paused_condition_->wait(lock1, [this]() -> bool {
+                   return !(*paused_);
+                });
+            }
             mj_step(model_, data_);
-            mtx_->unlock();
+            lock1.unlock();
         }
         LOG4CXX_DEBUG(logger, "Simulate loop ends");
     }

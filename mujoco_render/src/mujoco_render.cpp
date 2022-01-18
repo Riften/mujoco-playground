@@ -12,9 +12,14 @@ namespace mujoco_render {
 
     static log4cxx::LoggerPtr logger = log4cxx::Logger::getLogger("Render");
 
-    Render::Render(mjModel *model, mjData *data, const std::string& window_name, int window_width, int window_height, bool paused ) {
-        render_thread_ = new RenderThread(model, data, &mtx_, window_name, window_width, window_height);
-        simulate_thread_ = new SimulateThread(model, data, &mtx_);
+    Render::Render(mjModel *model, mjData *data, const std::string& window_name, int window_width, int window_height, bool paused ){
+        // Initialize shared pointer
+        mtx_ = std::make_shared<std::mutex>();
+        paused_ = std::make_shared<bool>(paused);
+        pause_condition_ = std::make_shared<std::condition_variable>();
+
+        render_thread_ = new RenderThread(model, data, mtx_, pause_condition_, paused_, window_name, window_width, window_height);
+        simulate_thread_ = new SimulateThread(model, data, mtx_, pause_condition_, paused_);
     }
 
     Render::~Render() {

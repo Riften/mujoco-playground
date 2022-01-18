@@ -1,6 +1,7 @@
 add_library(physics_mujoco
         STATIC
         src/mujoco_joint_group.cpp
+        src/mujoco_joint_group_qpfetcher.cpp
         src/mujoco_joint_controller.cpp
         src/mujoco_kinematic_tree.cpp
         src/utils.cpp

@@ -8,6 +8,7 @@
 #include <string>
 #include <thread>
 #include <mutex>
+#include <condition_variable>
 #include <mujoco_render/render_thread.h>
 #include <mujoco_render/simulate_thread.h>
 
@@ -26,7 +27,12 @@ namespace mujoco_render {
     private:
         RenderThread* render_thread_ = nullptr;
         SimulateThread* simulate_thread_ = nullptr;
-        std::mutex mtx_;
+
+        // It is convenient to use shared pointers here as we do not need to free them manually
+        // which could be confusing as it is used through different thread.
+        std::shared_ptr<std::mutex> mtx_;
+        std::shared_ptr<std::condition_variable> pause_condition_;
+        std::shared_ptr<bool> paused_;
     };
 }
 

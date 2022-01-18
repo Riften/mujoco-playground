@@ -108,4 +108,11 @@ namespace physics_mujoco {
             TraverseKDLTree(child, indent+1);
         }
     }
+
+    void mj_body_names(const mjModel* model, std::vector<std::string>& res) {
+        res.resize(model->nbody);
+        for (int i=0; i< model->nbody; ++i) {
+            res[i] =mj_id2name(model, mjOBJ_BODY, i);
+        }
+    }
 }

@@ -7,6 +7,11 @@
 #include <physics_mujoco/mujoco_state_validity_checker.h>
 #include <log4cxx/logger.h>
 
+/**
+ * LOCK_SCOPE will lock the current scope with `mujoco_mutex_`.
+ */
+#define LOCK_SCOPE const std::lock_guard<std::mutex> __lock__(*mujoco_mutex_);
+
 static log4cxx::LoggerPtr logger = log4cxx::Logger::getLogger("JointGroup");
 
 namespace physics_mujoco {
@@ -99,6 +104,9 @@ namespace physics_mujoco {
         // kdl_ik_solver_ = new KDL::ChainIkSolverPos_NR_JL(chain_, *kdl_fk_solver_, *kdl_ik_vel_solver_);
         /// Initialize ompl motion planner
         _init_ompl();
+
+        /// A default mutex would be used when no mutex is provided
+        mujoco_mutex_ = std::make_shared<std::mutex>();
     }
 /**
     JointGroup::JointGroup(mjModel *model, mjData *data,
@@ -148,10 +156,29 @@ namespace physics_mujoco {
         delete kdl_ik_solver_;
     }
 
+    void JointGroup::setMutex(std::shared_ptr<std::mutex> mtx) {
+        if(mtx == mujoco_mutex_) {
+            return ;
+        }
+        if(mujoco_mutex_) {
+            std::shared_ptr<std::mutex> previous_mutex = mujoco_mutex_;
+            previous_mutex->lock();
+            mujoco_mutex_ = mtx;
+            previous_mutex->unlock();
+        } else {
+            mujoco_mutex_ = mtx;
+        }
+    }
+
+    void JointGroup::toStream(std::ostream &out) {
+        out << KDLChainToString(chain_);
+    }
+
     void JointGroup::getPos(std::vector<physics_interface::JointPos> &res) {
         if(res.size() < n_jnt_) {
             throw InsufficientContainer(res.size(), n_jnt_);
         }
+        LOCK_SCOPE;
         for(int i=0; i< n_jnt_; ++i) {
             /// @todo multi joint support
             res[i] = data_->qpos[qpos_indices_[i]];
@@ -162,9 +189,19 @@ namespace physics_mujoco {
         if(res.data.size() != n_jnt_) {
             res.resize(n_jnt_);
         }
+        LOCK_SCOPE;
         for(int i=0; i< n_jnt_; ++i) {
             res(i) = data_->qpos[qpos_indices_[i]];
         }
+    }
+
+    double *JointGroup::getPos() const {
+        auto res = new double[n_jnt_];
+        LOCK_SCOPE;
+        for(int i=0; i<n_jnt_; ++i) {
+            res[i] = data_->qpos[qpos_indices_[i]];
+        }
+        return res;
     }
 
     void JointGroup::getVel(std::vector<physics_interface::JointVel> &res) {
@@ -183,6 +220,7 @@ namespace physics_mujoco {
                                    << jnt_pos.data.size() << " given while " << n_jnt_ << " required.");
             return;
         }
+        LOCK_SCOPE;
         for(int i=0; i< n_jnt_; ++i) {
             data_->qpos[qpos_indices_[i]] = jnt_pos(i);
         }
