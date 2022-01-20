@@ -52,9 +52,11 @@ private:
         while(!exit_) {
             std::unique_lock<std::mutex> lock1(*mtx_);
             if(*paused_) {
+                LOG4CXX_DEBUG(logger, "Simulate paused");
                 paused_condition_->wait(lock1, [this]() -> bool {
                    return !(*paused_);
                 });
+                LOG4CXX_DEBUG(logger, "Simulate resume");
             }
             mj_step(model_, data_);
             lock1.unlock();

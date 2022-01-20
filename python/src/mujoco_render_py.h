@@ -18,7 +18,8 @@ void bind_mujoco_render (py::module& m){
             py::arg("window_name") = "Render",
             py::arg("window_width") = 1200,
             py::arg("window_height") = 900,
-            py::arg("paused") = false);
+            py::arg("paused") = false)
+        .def("pause", &mujoco_render::Render::pause, "Pause the simulate thread");
 }
 
 #endif //MUJOCO_PLAYGROUND_MUJOCO_RENDER_PY_H

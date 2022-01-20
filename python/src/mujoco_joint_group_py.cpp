@@ -17,7 +17,7 @@ PYBIND11_MODULE(_physics_mujoco, m) {
 
     // Bind mutex with shared_ptr as holder
     py::class_<std::mutex, std::shared_ptr<std::mutex>>(m, "Mutex");
-
+    bind_kdl(m);
     bind_mujoco(m);
     bind_mujoco_render(m);
     bind_kinematic_tree(m);

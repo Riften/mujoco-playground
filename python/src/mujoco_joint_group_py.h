@@ -37,7 +37,8 @@ void bind_joint_group(py::module &m) {
                     data,                   //data pointer
                     free_when_done          //handler for free
             );
-        });
+        })
+        .def("setRandom", &physics_mujoco::JointGroup::setRandom);
 }
 
 #endif //MUJOCO_PLAYGROUND_MUJOCO_JOINT_GROUP_PY_H

@@ -63,6 +63,7 @@ namespace physics_mujoco {
         void getVel(std::vector<physics_interface::JointVel>& res) override;
         void setPos(KDL::JntArray & jnt_pos);
         KDL::JntArray setRandom();
+        // double* setRandom_py();
         KDL::Frame eefPos();
         KDL::Frame FK();
         /**

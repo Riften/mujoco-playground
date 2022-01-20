@@ -6,6 +6,7 @@
 #define MUJOCO_PLAYGROUND_KDL_CORE_PY_H
 
 #include <pybind11/pybind11.h>
+// #include <pybind11/numpy.h>
 #include <kdl/jntarray.hpp>
 
 namespace py=pybind11;
@@ -20,9 +21,10 @@ void bind_kdl(py::module &m) {
                 array.data.data(),
                 sizeof(Scalar),
                 py::format_descriptor<Scalar>::format(),
-                1,
-                {array.rows(),},
-                {1,}
+                2,
+                {array.rows(), array.columns()},
+                { sizeof(Scalar) * (rowMajor ? array.columns() : 1),
+                  sizeof(Scalar) * (rowMajor ? 1 : array.rows())}
             );
         });
 }

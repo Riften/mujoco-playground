@@ -24,6 +24,10 @@ namespace mujoco_render {
                bool paused = true);
 
         ~Render();
+        /**
+         * Pause/Start the simulate thread.
+         */
+        void pause();
     private:
         RenderThread* render_thread_ = nullptr;
         SimulateThread* simulate_thread_ = nullptr;
